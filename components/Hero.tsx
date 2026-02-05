@@ -1,91 +1,163 @@
-import { View, Text, StyleSheet, Image, ScrollView, TouchableOpacity, Dimensions } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
+import { useEffect, useRef, useState } from "react";
+import { Dimensions, FlatList, Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { DummyUsers } from "../data/DummyUsers";
-import { LinearGradient } from 'expo-linear-gradient';
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
-const { height: SCREEN_HEIGHT } = Dimensions.get('window');
+const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
 const CARD_WIDTH = SCREEN_WIDTH * 0.92;
 const CARD_HEIGHT = SCREEN_HEIGHT * 0.7;
 
+interface User {
+    id: number;
+    name: string;
+    age: number;
+    location: string;
+    images: string[];
+    hobbies: string[];
+}
+
 export default function Hero() {
-    const user = DummyUsers[0];
+    const [currentIndex, setCurrentIndex] = useState(0);
+
+    const currentUser = DummyUsers[currentIndex % DummyUsers.length];
+
+    const handleNextPerson = () => {
+        setCurrentIndex((prev) => (prev + 1) % DummyUsers.length);
+    };
+
+    const handleFriendRequest = () => {
+        console.log("Friend Request sent to:", currentUser.name);
+        // Add logic to send request
+    };
 
     return (
         <View style={styles.container}>
-            {/* TINDER-STYLE CARD */}
-            <View style={styles.card}>
+            {/* SINGLE USER CARD */}
+            <View style={styles.cardContainer}>
+                <UserCard
+                    card={currentUser}
+                    onFriendRequest={handleFriendRequest}
+                />
+            </View>
 
-                {/* IMAGE CAROUSEL */}
-                <ScrollView
-                    horizontal
-                    pagingEnabled
-                    showsHorizontalScrollIndicator={false}
-                    style={styles.imageContainer}
+            {/* NEXT BUTTON - Minimalist, aligned right */}
+            <View style={styles.nextButtonContainer}>
+                <TouchableOpacity
+                    style={styles.nextButton}
+                    onPress={handleNextPerson}
                 >
-                    {user.images.map((img, index) => (
-                        <View key={index} style={styles.imageWrapper}>
-                            <Image source={{ uri: img }} style={styles.image} />
+                    <Ionicons name="arrow-forward" size={24} color="#666" />
+                </TouchableOpacity>
+            </View>
+        </View>
+    );
+}
 
-                            {/* PAGE INDICATORS */}
-                            <View style={styles.pageIndicators}>
-                                {user.images.map((_, i) => (
-                                    <View
-                                        key={i}
-                                        style={[
-                                            styles.indicator,
-                                            i === index && styles.activeIndicator
-                                        ]}
-                                    />
-                                ))}
-                            </View>
+function UserCard({ card, onFriendRequest }: { card: User, onFriendRequest: () => void }) {
+    const [currentImageIndex, setCurrentImageIndex] = useState(0);
+    const scrollRef = useRef<FlatList>(null);
+
+    // Auto-play logic
+    useEffect(() => {
+        const interval = setInterval(() => {
+            if (card.images.length > 1) {
+                const nextIndex = (currentImageIndex + 1) % card.images.length;
+                setCurrentImageIndex(nextIndex);
+                scrollRef.current?.scrollToIndex({
+                    index: nextIndex,
+                    animated: true,
+                });
+            }
+        }, 3000); // Change image every 3 seconds
+
+        return () => clearInterval(interval);
+    }, [currentImageIndex, card.images.length]);
+
+    // Reset image index when user changes
+    useEffect(() => {
+        setCurrentImageIndex(0);
+        scrollRef.current?.scrollToIndex({ index: 0, animated: false });
+    }, [card.id]);
+
+    const onViewableItemsChanged = useRef(({ viewableItems }: any) => {
+        if (viewableItems.length > 0) {
+            setCurrentImageIndex(viewableItems[0].index);
+        }
+    }).current;
+
+    const viewabilityConfig = useRef({
+        itemVisiblePercentThreshold: 50,
+    }).current;
+
+    if (!card) return null;
+
+    return (
+        <View style={styles.card}>
+            {/* PHOTO CAROUSEL */}
+            <FlatList
+                ref={scrollRef}
+                data={card.images}
+                keyExtractor={(_, index) => index.toString()}
+                horizontal
+                pagingEnabled
+                showsHorizontalScrollIndicator={false}
+                onViewableItemsChanged={onViewableItemsChanged}
+                viewabilityConfig={viewabilityConfig}
+                renderItem={({ item }) => (
+                    <Image source={{ uri: item }} style={styles.image} />
+                )}
+            />
+
+            {/* PAGE INDICATORS */}
+            <View style={styles.pageIndicators}>
+                {card.images.map((_, indicatorIndex) => (
+                    <View
+                        key={indicatorIndex}
+                        style={[
+                            styles.indicator,
+                            indicatorIndex === currentImageIndex && styles.activeIndicator
+                        ]}
+                    />
+                ))}
+            </View>
+
+            {/* DARK GRADIENT */}
+            <LinearGradient
+                colors={["transparent", "rgba(0,0,0,0.85)"]}
+                style={styles.gradient}
+            />
+
+            {/* USER INFO */}
+            <View style={styles.infoBox}>
+                <View style={styles.nameRow}>
+                    <Text style={styles.name}>{card.name}</Text>
+                    <Text style={styles.age}>{card.age}</Text>
+                </View>
+
+                {card.location && (
+                    <View style={styles.locationRow}>
+                        <Ionicons name="location" size={16} color="rgba(255,255,255,0.9)" />
+                        <Text style={styles.location}>{card.location}</Text>
+                    </View>
+                )}
+
+                <View style={styles.hobbiesContainer}>
+                    {card.hobbies.slice(0, 3).map((hobbyItem, hobbyIndex) => (
+                        <View key={hobbyIndex} style={styles.hobbyPill}>
+                            <Text style={styles.hobbyText}>{hobbyItem}</Text>
                         </View>
                     ))}
-                </ScrollView>
-
-                {/* GRADIENT OVERLAY */}
-                <LinearGradient
-                    colors={['transparent', 'rgba(0,0,0,0.8)']}
-                    style={styles.gradient}
-                />
-
-                {/* USER INFO */}
-                <View style={styles.infoBox}>
-                    <View style={styles.userInfo}>
-                        <Text style={styles.name}>{user.name}</Text>
-                        <Text style={styles.age}>{user.age}</Text>
-                    </View>
-
-                    <View style={styles.hobbiesContainer}>
-                        {user.hobbies.slice(0, 3).map((hobby, index) => (
-                            <View key={index} style={styles.hobbyPill}>
-                                <Text style={styles.hobbyText}>{hobby}</Text>
-                            </View>
-                        ))}
-                    </View>
                 </View>
 
-                {/* ACTION BUTTONS */}
-                <View style={styles.actionButtons}>
-                    <TouchableOpacity style={[styles.actionButton, styles.rewindButton]}>
-                        <Text style={styles.actionIcon}>↶</Text>
-                    </TouchableOpacity>
-
-                    <TouchableOpacity style={[styles.actionButton, styles.nopeButton]}>
-                        <Text style={styles.actionIcon}>✕</Text>
-                    </TouchableOpacity>
-
-                    <TouchableOpacity style={[styles.actionButton, styles.superLikeButton]}>
-                        <Text style={styles.actionIcon}>★</Text>
-                    </TouchableOpacity>
-
-                    <TouchableOpacity style={[styles.actionButton, styles.likeButton]}>
-                        <Text style={styles.actionIcon}>❤</Text>
-                    </TouchableOpacity>
-
-                    <TouchableOpacity style={[styles.actionButton, styles.boostButton]}>
-                        <Text style={styles.actionIcon}>⚡</Text>
-                    </TouchableOpacity>
-                </View>
+                {/* CONNECT BUTTON */}
+                <TouchableOpacity
+                    style={styles.connectButton}
+                    onPress={onFriendRequest}
+                >
+                    <Ionicons name="person-add" size={22} color="#fff" />
+                    <Text style={styles.connectButtonText}>Connect</Text>
+                </TouchableOpacity>
             </View>
         </View>
     );
@@ -94,18 +166,34 @@ export default function Hero() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        alignItems: "center",
-        justifyContent: "flex-start", // Changed from "center"
-        backgroundColor: "#f5f5f5",
-        paddingTop: 25, // Add some top spacing
+        alignItems: 'center',
+        paddingTop: 10,
+    },
+    connectButton: {
+        position: "absolute",
+        bottom: 0,
+        right: 0,
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: "#FF4D6D",
+        paddingHorizontal: 16,
+        paddingVertical: 10,
+        borderRadius: 20,
+        gap: 6,
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.2,
+        shadowRadius: 3,
+        elevation: 3,
     },
 
-    card: {
-        width: CARD_WIDTH,
-        height: CARD_HEIGHT,
-        borderRadius: 16,
-        overflow: "hidden",
-        backgroundColor: "#fff",
+    connectButtonText: {
+        color: '#fff',
+        fontSize: 15,
+        fontWeight: '600',
+    },
+
+    cardContainer: {
         shadowColor: "#000",
         shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.15,
@@ -113,30 +201,27 @@ const styles = StyleSheet.create({
         elevation: 8,
     },
 
-    imageContainer: {
-        flex: 1,
-    },
-
-    imageWrapper: {
+    card: {
         width: CARD_WIDTH,
-        height: 600,
+        height: CARD_HEIGHT,
+        borderRadius: 24,
+        overflow: "hidden",
+        backgroundColor: "#fff",
     },
 
     image: {
-        width: "100%",
-        height: "100%",
+        width: CARD_WIDTH,
+        height: CARD_HEIGHT,
         resizeMode: "cover",
     },
 
     pageIndicators: {
         position: "absolute",
         top: 12,
-        left: 0,
-        right: 0,
+        left: 12,
+        right: 12,
         flexDirection: "row",
-        justifyContent: "center",
         gap: 6,
-        paddingHorizontal: 12,
     },
 
     indicator: {
@@ -160,17 +245,15 @@ const styles = StyleSheet.create({
 
     infoBox: {
         position: "absolute",
-        bottom: 0,
-        left: 0,
-        right: 0,
-        padding: 20,
-        paddingBottom: 100,
+        bottom: 20,
+        left: 20,
+        right: 20,
     },
 
-    userInfo: {
+    nameRow: {
         flexDirection: "row",
         alignItems: "baseline",
-        marginBottom: 12,
+        marginBottom: 6,
     },
 
     name: {
@@ -184,6 +267,18 @@ const styles = StyleSheet.create({
         color: "#fff",
         fontSize: 28,
         fontWeight: "400",
+    },
+
+    locationRow: {
+        flexDirection: "row",
+        alignItems: "center",
+        marginBottom: 12,
+    },
+
+    location: {
+        color: "rgba(255,255,255,0.9)",
+        fontSize: 15,
+        marginLeft: 4,
     },
 
     hobbiesContainer: {
@@ -207,72 +302,64 @@ const styles = StyleSheet.create({
         fontWeight: "500",
     },
 
-    actionButtons: {
+    infoButton: {
         position: "absolute",
-        bottom: 20,
-        left: 0,
+        bottom: 0,
         right: 0,
+    },
+
+    actionButtons: {
+        width: CARD_WIDTH,
         flexDirection: "row",
-        justifyContent: "center",
+        justifyContent: "space-between",
         alignItems: "center",
-        gap: 14,
-        paddingHorizontal: 20,
+        marginTop: 20,
+        gap: 15,
     },
 
     actionButton: {
-        width: 56,
-        height: 56,
-        borderRadius: 28,
+        flex: 1,
+        flexDirection: 'row',
         justifyContent: "center",
         alignItems: "center",
+        paddingVertical: 16,
+        borderRadius: 30,
         shadowColor: "#000",
         shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.2,
+        shadowOpacity: 0.1,
         shadowRadius: 4,
-        elevation: 4,
+        elevation: 3,
+        gap: 8,
     },
 
-    rewindButton: {
-        backgroundColor: "#FFC107",
-        width: 48,
-        height: 48,
-        borderRadius: 24,
+    friendRequestButton: {
+        backgroundColor: "#FF4D6D", // Brand color
     },
 
-    nopeButton: {
-        backgroundColor: "#fff",
-        width: 60,
-        height: 60,
+    nextButtonContainer: {
+        width: CARD_WIDTH,
+        marginTop: 20,
+        alignItems: 'flex-end',
+    },
+
+    nextButton: {
+        flexDirection: 'row',
+        justifyContent: "center",
+        alignItems: "center",
+        padding: 12,
         borderRadius: 30,
-        borderWidth: 2,
-        borderColor: "#FF6B6B",
-    },
-
-    superLikeButton: {
-        backgroundColor: "#4FC3F7",
-        width: 52,
-        height: 52,
-        borderRadius: 26,
-    },
-
-    likeButton: {
         backgroundColor: "#fff",
-        width: 64,
-        height: 64,
-        borderRadius: 32,
-        borderWidth: 2,
-        borderColor: "#4CAF50",
+        borderWidth: 1,
+        borderColor: "#e0e0e0",
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.05,
+        shadowRadius: 2,
+        elevation: 1,
     },
-
-    boostButton: {
-        backgroundColor: "#9C27B0",
-        width: 48,
-        height: 48,
-        borderRadius: 24,
-    },
-
-    actionIcon: {
-        fontSize: 28,
-        fontWeight: "bold",
-    },
+    buttonText: {
+        fontSize: 16,
+        fontWeight: '600',
+        color: '#fff',
+    }
 });
