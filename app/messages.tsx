@@ -1,20 +1,23 @@
+import { Ionicons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
+import { useState } from "react";
 import {
-    View,
-    Text,
-    StyleSheet,
     FlatList,
     Image,
     ScrollView,
+    StyleSheet,
+    Text,
     TextInput,
     TouchableOpacity,
+    View,
 } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { currentUser, friends, chats } from "../data/DummyChats";
+import { chats, currentUser, friends } from "../data/DummyChats";
+import { DummyRequests } from "../data/DummyRequest";
 
 export default function Messages() {
     const router = useRouter();
+    const [activeTab, setActiveTab] = useState<'messages' | 'requests'>('messages');
 
     return (
         <SafeAreaView style={styles.container} edges={["top"]}>
@@ -60,49 +63,95 @@ export default function Messages() {
                 </ScrollView>
             </View>
 
-            {/* 💬 SECTION HEADER */}
-            <View style={styles.sectionHeader}>
-                <Text style={styles.sectionTitle}>Messages</Text>
-                <TouchableOpacity>
-                    <Ionicons name="filter" size={20} color="#666" />
+            {/* 💬 TAB SWITCHER */}
+            <View style={styles.tabContainer}>
+                <TouchableOpacity
+                    style={[styles.tabButton, activeTab === 'messages' && styles.activeTab]}
+                    onPress={() => setActiveTab('messages')}
+                >
+                    <Text style={[styles.tabText, activeTab === 'messages' && styles.activeTabText]}>Messages</Text>
+                    {activeTab === 'messages' && <View style={styles.activeIndicator} />}
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                    style={[styles.tabButton, activeTab === 'requests' && styles.activeTab]}
+                    onPress={() => setActiveTab('requests')}
+                >
+                    <Text style={[styles.tabText, activeTab === 'requests' && styles.activeTabText]}>Requests</Text>
+                    {activeTab === 'requests' && <View style={styles.activeIndicator} />}
+                    <View style={styles.badge}>
+                        <Text style={styles.badgeText}>{DummyRequests.length}</Text>
+                    </View>
                 </TouchableOpacity>
             </View>
 
-            {/* 💬 CHAT LIST */}
-            <FlatList
-                data={chats}
-                keyExtractor={(item) => item.id.toString()}
-                renderItem={({ item }) => (
-                    <TouchableOpacity
-                        style={styles.chatItem}
-                        activeOpacity={0.7}
-                        onPress={() => router.push({ pathname: "/chat/[id]", params: { id: item.id, name: item.name } })}
-
-                    >
-                        <View style={styles.chatAvatarWrapper}>
-                            <Image source={{ uri: item.avatar }} style={styles.chatAvatar} />
-                            {item.online && <View style={styles.onlineDot} />}
-                        </View>
-
-                        <View style={styles.chatTextContainer}>
-                            <View style={styles.chatTopRow}>
-                                <Text style={styles.chatName}>{item.name}</Text>
-                                <Text style={styles.chatTime}>2m</Text>
+            {/* 💬 CHAT LIST or REQUEST LIST */}
+            {activeTab === 'messages' ? (
+                <FlatList
+                    data={chats}
+                    keyExtractor={(item) => item.id.toString()}
+                    renderItem={({ item }) => (
+                        <TouchableOpacity
+                            style={styles.chatItem}
+                            activeOpacity={0.7}
+                            onPress={() => router.push({ pathname: "/chat/[id]", params: { id: item.id, name: item.name } })}
+                        >
+                            <View style={styles.chatAvatarWrapper}>
+                                <Image source={{ uri: item.avatar }} style={styles.chatAvatar} />
+                                {item.online && <View style={styles.onlineDot} />}
                             </View>
-                            <Text style={styles.chatMessage} numberOfLines={1}>
-                                {item.message}
-                            </Text>
-                        </View>
 
-                        {item.unread && (
-                            <View style={styles.unreadBadge}>
-                                <Text style={styles.unreadText}>1</Text>
+                            <View style={styles.chatTextContainer}>
+                                <View style={styles.chatTopRow}>
+                                    <Text style={styles.chatName}>{item.name}</Text>
+                                    <Text style={styles.chatTime}>2m</Text>
+                                </View>
+                                <Text style={styles.chatMessage} numberOfLines={1}>
+                                    {item.message}
+                                </Text>
                             </View>
-                        )}
-                    </TouchableOpacity>
-                )}
-                showsVerticalScrollIndicator={false}
-            />
+
+                            {item.unread && (
+                                <View style={styles.unreadBadge}>
+                                    <Text style={styles.unreadText}>1</Text>
+                                </View>
+                            )}
+                        </TouchableOpacity>
+                    )}
+                    showsVerticalScrollIndicator={false}
+                />
+            ) : (
+                <FlatList
+                    data={DummyRequests}
+                    keyExtractor={(item) => item.id.toString()}
+                    renderItem={({ item }) => (
+                        <View style={styles.requestItem}>
+                            <Image source={{ uri: item.avatar }} style={styles.requestAvatar} />
+                            <View style={styles.requestInfo}>
+                                <View style={styles.requestTop}>
+                                    <Text style={styles.requestName}>{item.name}</Text>
+                                    <Text style={styles.requestTime}>{item.time}</Text>
+                                </View>
+                                <Text style={styles.requestBio} numberOfLines={2}>{item.bio}</Text>
+
+                                <View style={styles.actionButtons}>
+                                    <TouchableOpacity style={styles.acceptButton} onPress={() => console.log('Accept', item.name)}>
+                                        <Text style={styles.acceptButtonText}>Accept</Text>
+                                    </TouchableOpacity>
+                                    <TouchableOpacity style={styles.declineButton} onPress={() => console.log('Decline', item.name)}>
+                                        <Text style={styles.declineButtonText}>Decline</Text>
+                                    </TouchableOpacity>
+                                    <TouchableOpacity style={styles.blockButton} onPress={() => console.log('Block', item.name)}>
+                                        <Ionicons name="ban-outline" size={20} color="#FF6B6B" />
+                                    </TouchableOpacity>
+                                </View>
+                            </View>
+                        </View>
+                    )}
+                    showsVerticalScrollIndicator={false}
+                    contentContainerStyle={{ paddingBottom: 20 }}
+                />
+            )}
         </SafeAreaView>
     );
 }
@@ -188,19 +237,67 @@ const styles = StyleSheet.create({
         textAlign: "center",
     },
 
-    sectionHeader: {
-        flexDirection: "row",
-        justifyContent: "space-between",
-        alignItems: "center",
-        paddingHorizontal: 16,
-        paddingVertical: 12,
-        backgroundColor: "#fafafa",
-    },
-
     sectionTitle: {
         fontSize: 16,
         fontWeight: "600",
         color: "#111",
+    },
+
+    tabContainer: {
+        flexDirection: "row",
+        paddingHorizontal: 16,
+        borderBottomWidth: 1,
+        borderColor: "#f0f0f0",
+        backgroundColor: "#fff",
+    },
+
+    tabButton: {
+        flex: 1,
+        paddingVertical: 16,
+        alignItems: "center",
+        justifyContent: "center",
+        position: "relative",
+        flexDirection: "row",
+        gap: 6,
+    },
+
+    activeTab: {
+        // borderBottomWidth: 2,
+        // borderColor: "#FF4D6D",
+    },
+
+    activeIndicator: {
+        position: 'absolute',
+        bottom: 0,
+        height: 3,
+        width: '40%',
+        backgroundColor: '#0eb41cff',
+        borderTopLeftRadius: 3,
+        borderTopRightRadius: 3,
+    },
+
+    tabText: {
+        fontSize: 16,
+        color: "#999",
+        fontWeight: "500",
+    },
+
+    activeTabText: {
+        color: "#131111ff",
+        fontWeight: "700",
+    },
+
+    badge: {
+        backgroundColor: "#171868ff",
+        paddingHorizontal: 6,
+        paddingVertical: 2,
+        borderRadius: 10,
+    },
+
+    badgeText: {
+        color: "#fff",
+        fontSize: 10,
+        fontWeight: "700",
     },
 
     chatItem: {
@@ -278,5 +375,96 @@ const styles = StyleSheet.create({
         color: "#fff",
         fontSize: 12,
         fontWeight: "600",
+    },
+
+    // REQUEST LIST STYLES
+    requestItem: {
+        flexDirection: "row",
+        paddingHorizontal: 16,
+        paddingVertical: 16,
+        borderBottomWidth: 1,
+        borderColor: "#f8f8f8",
+        backgroundColor: "#fff",
+    },
+
+    requestAvatar: {
+        width: 60,
+        height: 60,
+        borderRadius: 30,
+        backgroundColor: "#f0f0f0",
+    },
+
+    requestInfo: {
+        marginLeft: 12,
+        flex: 1,
+    },
+
+    requestTop: {
+        flexDirection: "row",
+        justifyContent: "space-between",
+        alignItems: "center",
+        marginBottom: 4,
+    },
+
+    requestName: {
+        fontSize: 16,
+        fontWeight: "700",
+        color: "#111",
+    },
+
+    requestTime: {
+        fontSize: 12,
+        color: "#999",
+    },
+
+    requestBio: {
+        fontSize: 14,
+        color: "#666",
+        marginBottom: 12,
+        lineHeight: 20,
+    },
+
+    actionButtons: {
+        flexDirection: "row",
+        gap: 10,
+        alignItems: 'center',
+    },
+
+    acceptButton: {
+        flex: 1,
+        backgroundColor: "#1a8a3bff",
+        paddingVertical: 8,
+        borderRadius: 8,
+        alignItems: "center",
+    },
+
+    acceptButtonText: {
+        color: "#fff",
+        fontWeight: "600",
+        fontSize: 14,
+    },
+
+    declineButton: {
+        flex: 1,
+        backgroundColor: "#f5f5f5",
+        paddingVertical: 8,
+        borderRadius: 8,
+        alignItems: "center",
+        borderWidth: 1,
+        borderColor: "#e0e0e0",
+    },
+
+    declineButtonText: {
+        color: "#333",
+        fontWeight: "600",
+        fontSize: 14,
+    },
+
+    blockButton: {
+        padding: 8,
+        borderRadius: 8,
+        backgroundColor: "#FFF5F5",
+        justifyContent: 'center',
+        alignItems: 'center',
     },
 });

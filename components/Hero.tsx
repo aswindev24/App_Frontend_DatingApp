@@ -1,12 +1,10 @@
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useEffect, useRef, useState } from "react";
-import { Dimensions, FlatList, Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { FlatList, Image, StyleSheet, Text, TouchableOpacity, View, useWindowDimensions } from "react-native";
 import { DummyUsers } from "../data/DummyUsers";
 
-const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
-const CARD_WIDTH = SCREEN_WIDTH * 0.92;
-const CARD_HEIGHT = SCREEN_HEIGHT * 0.7;
+// Removed static dimensions to support dynamic resizing
 
 interface User {
     id: number;
@@ -18,12 +16,19 @@ interface User {
 }
 
 export default function Hero() {
+    const { width, height } = useWindowDimensions();
+    const cardWidth = width * 0.92;
+    const cardHeight = height * 0.7;
     const [currentIndex, setCurrentIndex] = useState(0);
 
     const currentUser = DummyUsers[currentIndex % DummyUsers.length];
 
     const handleNextPerson = () => {
         setCurrentIndex((prev) => (prev + 1) % DummyUsers.length);
+    };
+
+    const handlePreviousPerson = () => {
+        setCurrentIndex((prev) => (prev - 1 + DummyUsers.length) % DummyUsers.length);
     };
 
     const handleFriendRequest = () => {
@@ -38,13 +43,24 @@ export default function Hero() {
                 <UserCard
                     card={currentUser}
                     onFriendRequest={handleFriendRequest}
+                    cardWidth={cardWidth}
+                    cardHeight={cardHeight}
                 />
             </View>
 
-            {/* NEXT BUTTON - Minimalist, aligned right */}
-            <View style={styles.nextButtonContainer}>
+            {/* NAVIGATION BUTTONS */}
+            <View style={[styles.navigationContainer, { width: cardWidth }]}>
+                {/* PREVIOUS BUTTON */}
                 <TouchableOpacity
-                    style={styles.nextButton}
+                    style={styles.navButton}
+                    onPress={handlePreviousPerson}
+                >
+                    <Ionicons name="arrow-back" size={24} color="#666" />
+                </TouchableOpacity>
+
+                {/* NEXT BUTTON */}
+                <TouchableOpacity
+                    style={styles.navButton}
                     onPress={handleNextPerson}
                 >
                     <Ionicons name="arrow-forward" size={24} color="#666" />
@@ -54,7 +70,7 @@ export default function Hero() {
     );
 }
 
-function UserCard({ card, onFriendRequest }: { card: User, onFriendRequest: () => void }) {
+function UserCard({ card, onFriendRequest, cardWidth, cardHeight }: { card: User, onFriendRequest: () => void, cardWidth: number, cardHeight: number }) {
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
     const scrollRef = useRef<FlatList>(null);
 
@@ -93,7 +109,7 @@ function UserCard({ card, onFriendRequest }: { card: User, onFriendRequest: () =
     if (!card) return null;
 
     return (
-        <View style={styles.card}>
+        <View style={[styles.card, { width: cardWidth, height: cardHeight }]}>
             {/* PHOTO CAROUSEL */}
             <FlatList
                 ref={scrollRef}
@@ -105,7 +121,7 @@ function UserCard({ card, onFriendRequest }: { card: User, onFriendRequest: () =
                 onViewableItemsChanged={onViewableItemsChanged}
                 viewabilityConfig={viewabilityConfig}
                 renderItem={({ item }) => (
-                    <Image source={{ uri: item }} style={styles.image} />
+                    <Image source={{ uri: item }} style={[styles.image, { width: cardWidth, height: cardHeight }]} />
                 )}
             />
 
@@ -156,7 +172,7 @@ function UserCard({ card, onFriendRequest }: { card: User, onFriendRequest: () =
                     onPress={onFriendRequest}
                 >
                     <Ionicons name="person-add" size={22} color="#fff" />
-                    <Text style={styles.connectButtonText}>Connect</Text>
+                    {/* <Text style={styles.connectButtonText}></Text> Removed empty text for perfect centering */}
                 </TouchableOpacity>
             </View>
         </View>
@@ -173,13 +189,12 @@ const styles = StyleSheet.create({
         position: "absolute",
         bottom: 0,
         right: 0,
-        flexDirection: 'row',
+        justifyContent: 'center',
         alignItems: 'center',
-        backgroundColor: "#FF4D6D",
-        paddingHorizontal: 16,
-        paddingVertical: 10,
-        borderRadius: 20,
-        gap: 6,
+        backgroundColor: "#1a8a3bff",
+        width: 50, // Fixed width
+        height: 50, // Fixed height (same as width for a circle)
+        borderRadius: 25, // Half of width/height
         shadowColor: "#000",
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.2,
@@ -202,16 +217,12 @@ const styles = StyleSheet.create({
     },
 
     card: {
-        width: CARD_WIDTH,
-        height: CARD_HEIGHT,
         borderRadius: 24,
         overflow: "hidden",
         backgroundColor: "#fff",
     },
 
     image: {
-        width: CARD_WIDTH,
-        height: CARD_HEIGHT,
         resizeMode: "cover",
     },
 
@@ -309,7 +320,7 @@ const styles = StyleSheet.create({
     },
 
     actionButtons: {
-        width: CARD_WIDTH,
+        // width: CARD_WIDTH, // Removed static width
         flexDirection: "row",
         justifyContent: "space-between",
         alignItems: "center",
@@ -336,13 +347,14 @@ const styles = StyleSheet.create({
         backgroundColor: "#FF4D6D", // Brand color
     },
 
-    nextButtonContainer: {
-        width: CARD_WIDTH,
+    navigationContainer: {
         marginTop: 20,
-        alignItems: 'flex-end',
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
     },
 
-    nextButton: {
+    navButton: {
         flexDirection: 'row',
         justifyContent: "center",
         alignItems: "center",
