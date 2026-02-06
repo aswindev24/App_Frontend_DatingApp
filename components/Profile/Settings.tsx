@@ -120,7 +120,7 @@ export default function Settings({ visible, onClose }: SettingsProps) {
     const handleDeleteAccount = () => {
         Alert.alert(
             'Delete Account',
-            'This will permanently delete your account and all data. This action cannot be undone.',
+            'This will delete your account and all data. This action cannot be undone.',
             [
                 { text: 'Cancel', style: 'cancel' },
                 {
