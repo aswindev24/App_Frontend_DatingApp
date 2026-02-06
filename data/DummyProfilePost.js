@@ -1,0 +1,17 @@
+export const POSTS = [
+    { id: '1', type: 'image', image: 'https://picsum.photos/400/400?random=1' },
+    { id: '2', type: 'image', image: 'https://picsum.photos/400/400?random=2' },
+    { id: '3', type: 'image', image: 'https://picsum.photos/400/400?random=3' },
+    { id: '4', type: 'video', image: 'https://picsum.photos/400/400?random=4' },
+    { id: '5', type: 'image', image: 'https://picsum.photos/400/400?random=5' },
+    { id: '6', type: 'image', image: 'https://picsum.photos/400/400?random=6' },
+    { id: '7', type: 'image', image: 'https://picsum.photos/400/400?random=7' },
+    { id: '8', type: 'video', image: 'https://picsum.photos/400/400?random=8' },
+    { id: '9', type: 'image', image: 'https://picsum.photos/400/400?random=9' },
+    { id: '10', type: 'image', image: 'https://picsum.photos/400/400?random=10' },
+    { id: '11', type: 'image', image: 'https://picsum.photos/400/400?random=11' },
+    { id: '12', type: 'video', image: 'https://picsum.photos/400/400?random=12' },
+    { id: '13', type: 'image', image: 'https://picsum.photos/400/400?random=13' },
+    { id: '14', type: 'image', image: 'https://picsum.photos/400/400?random=14' },
+    { id: '15', type: 'image', image: 'https://picsum.photos/400/400?random=15' },
+];

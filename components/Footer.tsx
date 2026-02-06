@@ -1,12 +1,12 @@
-import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
+import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 export default function Footer() {
     const router = useRouter();
     return (
         <View style={styles.footer}>
-            <TouchableOpacity style={styles.iconBox} onPress={() => router.push("/")}>
+            <TouchableOpacity style={styles.iconBox} onPress={() => router.push("/home")}>
                 <Ionicons name="heart" size={26} color="#ff4d6d" />
                 <Text style={styles.iconText}>Love</Text>
             </TouchableOpacity>
